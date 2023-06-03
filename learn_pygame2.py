@@ -33,6 +33,10 @@ enemy_count = 3
 coin_count = 3
 player_alive = True
 
+# images
+bg_image = pygame.image.load("sprites/background.png")
+bg_image = pygame.transform.scale(bg_image, (screen_w, screen_h))
+
 
 class Player:
 
@@ -99,6 +103,7 @@ player = Player(screen_w // 2, screen_h // 2)
 while player_alive:
     # tick clock
     clock.tick(fps)
+    screen.blit(bg_image, (0, 0))
 
     # test for inputs
     for event in pygame.event.get():
@@ -129,7 +134,6 @@ while player_alive:
             elif event.key == pygame.K_UP:
                 player.move_u = False
 
-    screen.fill((50, 50, 100))
     enemy_group.draw(screen)
     coin_group.draw(screen)
     player.update()
