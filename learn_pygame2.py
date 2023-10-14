@@ -42,7 +42,8 @@ class Player:
 
     def __init__(self, x, y):
         self.rect = pygame.Rect((x, y), (100, 100))
-        self.color = (0, 0, 100)
+        self.color = (100, 0, 100)
+        self.image = pygame.image.load("sprites/player.png")
         # movement variables
         self.move_r = False
         self.move_l = False
@@ -55,8 +56,8 @@ class Player:
         update the position and draw the sprite
         :return:
         """
+        screen.blit(self.image, (self.rect.x, self.rect.y))
         pygame.draw.rect(screen, self.color, self.rect)
-
         # update positions
         if self.move_r:
             self.rect.x += self.speed
@@ -73,12 +74,17 @@ class Coin(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("sprites/coin.png")
+        self.image = pygame.transform.scale(self.image, (30, 40))
         self.color = (255, 255, 0)
         self.pos = (x, y)
-        self.radius = 10
+        self.radius = 30
         self.rect = pygame.Rect(
-            (self.pos[0] - self.radius, self.pos[1] - self.radius), (self.radius * 2, self.radius * 2)
+            (self.pos[0] - self.radius, self.pos[1] - self.radius), (20, 40)
         )
+
+    def update(self):
+        pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(self.image, (self.rect.x - 10, self.rect.y))
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -86,8 +92,12 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("sprites/enemy.png")
-        self.rect = pygame.Rect((x, y), (30, 30))
+        self.rect = pygame.Rect((x, y), (100, 80))
         self.color = (255, 0, 0)
+
+    def update(self):
+        pygame.draw.rect(screen, self.color, self.rect)
+        screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
 
 
 for _ in range(enemy_count):
@@ -104,6 +114,18 @@ while player_alive:
     # tick clock
     clock.tick(fps)
     screen.blit(bg_image, (0, 0))
+
+    # check for collisions
+
+    # check for enemy group collision
+    for enemy in enemy_group:
+        if player.rect.colliderect(enemy):
+            print("colliding with enemy")
+
+    # check for coin group collision
+    for coin in coin_group:
+        if player.rect.colliderect(coin):
+            print("colliding with coin")
 
     # test for inputs
     for event in pygame.event.get():
@@ -134,8 +156,11 @@ while player_alive:
             elif event.key == pygame.K_UP:
                 player.move_u = False
 
-    enemy_group.draw(screen)
-    coin_group.draw(screen)
+    enemy_group.update()
+    coin_group.update()
+
+
+
     player.update()
 
     pygame.display.flip()
