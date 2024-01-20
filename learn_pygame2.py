@@ -190,8 +190,7 @@ while player_alive:
 
     # Player health
     health_text = font.render(f"Health: {player_health}", True, (31, 26, 26))
-    pygame.draw.rect()
-    screen.blit(health_text, (100, 10))
+    screen.blit(health_text, (130, 10))
 
     if player_health <= 0:
         player_alive = False
