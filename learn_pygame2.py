@@ -31,12 +31,13 @@ enemy_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 
 # game variables
-enemy_count = 1
+enemy_count = 3
 coin_count = 3
 player_alive = True
 score = 0
 player_health = 255
 attack = False
+controller = 0
 
 # images
 bg_image = pygame.image.load("sprites/background.png")
@@ -100,6 +101,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect((x, y), (100, 80))
         self.color = (255, 0, 0)
         self.speed = 2
+        self.damage = 10
         self.health = 100
 
     def update(self):
@@ -116,12 +118,42 @@ class Enemy(pygame.sprite.Sprite):
             dy /= distance
             self.rect.x += int(dx * self.speed)
             self.rect.y += int(dy * self.speed)
-        if self.health >= 0:
-            screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
+
+        screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
+
+
+class BigEnemy(pygame.sprite.Sprite):
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("sprites/bigEnemy.png")
+        self.image = pygame.transform.scale(self.image, (150, 150))
+        self.rect = pygame.Rect((x, y), (150, 150))
+        self.color = (255, 0, 0)
+        self.speed = 1
+        self.damage = 20
+        self.health = 100
+
+    def update(self):
+        # pygame.draw.rect(screen, self.color, self.rect)
+
+        # Calculate the direction and distance to the player
+        dx = player.rect.x - self.rect.x
+        dy = player.rect.y - self.rect.y
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+
+        # Move towards player
+        if distance != 0:
+            dx /= distance
+            dy /= distance
+            self.rect.x += int(dx * self.speed)
+            self.rect.y += int(dy * self.speed)
+
+        screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
 
 
 for _ in range(enemy_count):
-    enemy = Enemy(random.randint(0, screen_w), random.randint(0, screen_h))
+    enemy = Enemy(random.randint(0, screen_w), random.randint(0, 30))
     enemy_group.add(enemy)
 
 for _ in range(coin_count):
@@ -135,17 +167,34 @@ while player_alive:
     clock.tick(fps)
     screen.blit(bg_image, (0, 0))
 
+    if attack:
+        controller += 1
+
     # check for collisions
 
     # check for enemy group collision
     for enemy in enemy_group:
         to_player_dist = math.sqrt((player.rect.x - enemy.rect.x)**2 + (player.rect.y - enemy.rect.y)**2)
-        if to_player_dist <= 150 and attack:
-            print(enemy.health)
-            enemy.health -= 20
+        pygame.draw.rect(
+            screen,
+            (100-enemy.health, enemy.health, 0),
+            pygame.Rect(
+                (enemy.rect.x, enemy.rect.y - 20),
+                (enemy.health, 10)
+            )
+        )
+        print(controller, "con")
+        if to_player_dist <= 150 and attack and controller <= 10:
+            enemy.health -= 5
 
         if enemy.health <= 0:
+            score += 20
             enemy_group.remove(enemy)
+            if len(enemy_group) < 15:
+                enemy1 = BigEnemy(random.randint(0, screen_w), random.randint(0, 30))
+                enemy_group.add(enemy1)
+                enemy2 = Enemy(random.randint(0, screen_w), random.randint(0, 30))
+                enemy_group.add(enemy2)
 
         if player.rect.colliderect(enemy):
             print("colliding with enemy")
@@ -155,7 +204,7 @@ while player_alive:
     for coin in coin_group:
         if player.rect.colliderect(coin):
             print("colliding with coin")
-            score += 5
+            player_health += 30
             coin_group.remove(coin)
             coin1 = Coin(random.randint(0, screen_w), random.randint(0, screen_h))
             coin_group.add(coin1)
@@ -193,6 +242,7 @@ while player_alive:
                 player.move_u = False
             elif event.key == pygame.K_SPACE:
                 attack = False
+                controller = 0
 
     enemy_group.update()
     coin_group.update()
@@ -207,6 +257,8 @@ while player_alive:
     health_text = font.render(f"Health: ", True, (31, 26, 26))
     screen.blit(health_text, (130, 20))
     health_rect = pygame.Rect((225, 20), (player_health, 30))
+    if player_health > 255:
+        player_health = 255
     pygame.draw.rect(screen, (255-player_health, player_health, 0), health_rect)
 
     if player_health <= 0:
