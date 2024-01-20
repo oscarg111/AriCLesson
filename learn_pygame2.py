@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import sys
 import random
@@ -32,6 +34,8 @@ coin_group = pygame.sprite.Group()
 enemy_count = 3
 coin_count = 3
 player_alive = True
+score = 0
+player_health = 100
 
 # images
 bg_image = pygame.image.load("sprites/background.png")
@@ -57,7 +61,7 @@ class Player:
         :return:
         """
         screen.blit(self.image, (self.rect.x, self.rect.y))
-        pygame.draw.rect(screen, self.color, self.rect)
+        # pygame.draw.rect(screen, self.color, self.rect)
         # update positions
         if self.move_r:
             self.rect.x += self.speed
@@ -83,7 +87,7 @@ class Coin(pygame.sprite.Sprite):
         )
 
     def update(self):
-        pygame.draw.rect(screen, self.color, self.rect)
+        # pygame.draw.rect(screen, self.color, self.rect)
         screen.blit(self.image, (self.rect.x - 10, self.rect.y))
 
 
@@ -94,9 +98,23 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.image.load("sprites/enemy.png")
         self.rect = pygame.Rect((x, y), (100, 80))
         self.color = (255, 0, 0)
+        self.speed = 2
 
     def update(self):
-        pygame.draw.rect(screen, self.color, self.rect)
+        # pygame.draw.rect(screen, self.color, self.rect)
+
+        # Calculate the direction and distance to the player
+        dx = player.rect.x - self.rect.x
+        dy = player.rect.y - self.rect.y
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+
+        # Move towards player
+        if distance != 0:
+            dx /= distance
+            dy /= distance
+            self.rect.x += int(dx * self.speed)
+            self.rect.y += int(dy * self.speed)
+
         screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
 
 
@@ -121,11 +139,16 @@ while player_alive:
     for enemy in enemy_group:
         if player.rect.colliderect(enemy):
             print("colliding with enemy")
+            player_health -= 5
 
     # check for coin group collision
     for coin in coin_group:
         if player.rect.colliderect(coin):
             print("colliding with coin")
+            score += 5
+            coin_group.remove(coin)
+            coin1 = Coin(random.randint(0, screen_w), random.randint(0, screen_h))
+            coin_group.add(coin1)
 
     # test for inputs
     for event in pygame.event.get():
@@ -158,9 +181,19 @@ while player_alive:
 
     enemy_group.update()
     coin_group.update()
-
-
-
     player.update()
+
+    # Display and update score
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f"Score: {score}", True, (31, 26, 26))
+    screen.blit(score_text, (10, 10))
+
+    # Player health
+    health_text = font.render(f"Health: {player_health}", True, (31, 26, 26))
+    pygame.draw.rect()
+    screen.blit(health_text, (100, 10))
+
+    if player_health <= 0:
+        player_alive = False
 
     pygame.display.flip()
