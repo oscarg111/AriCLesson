@@ -31,11 +31,12 @@ enemy_group = pygame.sprite.Group()
 coin_group = pygame.sprite.Group()
 
 # game variables
-enemy_count = 3
+enemy_count = 1
 coin_count = 3
 player_alive = True
 score = 0
-player_health = 100
+player_health = 255
+attack = False
 
 # images
 bg_image = pygame.image.load("sprites/background.png")
@@ -99,6 +100,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = pygame.Rect((x, y), (100, 80))
         self.color = (255, 0, 0)
         self.speed = 2
+        self.health = 100
 
     def update(self):
         # pygame.draw.rect(screen, self.color, self.rect)
@@ -114,8 +116,8 @@ class Enemy(pygame.sprite.Sprite):
             dy /= distance
             self.rect.x += int(dx * self.speed)
             self.rect.y += int(dy * self.speed)
-
-        screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
+        if self.health >= 0:
+            screen.blit(self.image, (self.rect.x - 10, self.rect.y - 50))
 
 
 for _ in range(enemy_count):
@@ -137,6 +139,14 @@ while player_alive:
 
     # check for enemy group collision
     for enemy in enemy_group:
+        to_player_dist = math.sqrt((player.rect.x - enemy.rect.x)**2 + (player.rect.y - enemy.rect.y)**2)
+        if to_player_dist <= 150 and attack:
+            print(enemy.health)
+            enemy.health -= 20
+
+        if enemy.health <= 0:
+            enemy_group.remove(enemy)
+
         if player.rect.colliderect(enemy):
             print("colliding with enemy")
             player_health -= 5
@@ -167,6 +177,9 @@ while player_alive:
                 player.move_d = True
             elif event.key == pygame.K_UP:
                 player.move_u = True
+            elif event.key == pygame.K_SPACE:
+                attack = True
+
 
         # key up events
         elif event.type == pygame.KEYUP:
@@ -178,6 +191,8 @@ while player_alive:
                 player.move_d = False
             elif event.key == pygame.K_UP:
                 player.move_u = False
+            elif event.key == pygame.K_SPACE:
+                attack = False
 
     enemy_group.update()
     coin_group.update()
@@ -189,8 +204,10 @@ while player_alive:
     screen.blit(score_text, (10, 10))
 
     # Player health
-    health_text = font.render(f"Health: {player_health}", True, (31, 26, 26))
-    screen.blit(health_text, (130, 10))
+    health_text = font.render(f"Health: ", True, (31, 26, 26))
+    screen.blit(health_text, (130, 20))
+    health_rect = pygame.Rect((225, 20), (player_health, 30))
+    pygame.draw.rect(screen, (255-player_health, player_health, 0), health_rect)
 
     if player_health <= 0:
         player_alive = False
